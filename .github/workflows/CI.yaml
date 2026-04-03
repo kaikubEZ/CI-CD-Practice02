@@ -1,0 +1,55 @@
+name: Check If Code Build
+
+on:
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Clone Codebase
+              uses: actions/checkout@v6
+
+            - name: Check If File Exist
+              run: |
+                  ls -la
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  run_install: false
+
+            # Install NodeJS
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Build Codebase
+              run: pnpm run build
+
+            - name: Upload artifact for deployment
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ./out
+
+    deploy:
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        runs-on: ubuntu-latest
+        needs: check
+        steps:
+            - name: Deploy To GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
